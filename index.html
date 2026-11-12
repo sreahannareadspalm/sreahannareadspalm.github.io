@@ -457,6 +457,10 @@ footer{border-top:1px solid var(--rule);padding-block:48px calc(48px + env(safe-
                 <div class="field"><label for="fName">Your name</label><input class="input" id="fName" name="name" autocomplete="name" required><span class="err" id="eName"></span></div>
                 <div class="field"><label for="fReading">Reading</label><select class="input" id="fReading" name="reading"></select></div>
               </div>
+              <div class="row">
+                <div class="field"><label for="fDob">Date of birth</label><input class="input" type="date" id="fDob" name="dob" min="1920-01-01"></div>
+                <div class="field"><label for="fLang">Language</label><select class="input" id="fLang" name="lang"><option>English</option><option>Hindi</option><option>Malayalam</option><option>Kannada</option></select></div>
+              </div>
               <div class="field"><span class="lbl" id="lMode">Session</span>
                 <div class="seg" role="radiogroup" aria-labelledby="lMode">
                   <input type="radio" name="mode" id="m1" value="Video call" checked><label for="m1">Video call</label>
@@ -464,10 +468,7 @@ footer{border-top:1px solid var(--rule);padding-block:48px calc(48px + env(safe-
                   <input type="radio" name="mode" id="m3" value="In person, Bangalore"><label for="m3">In person, Bangalore</label>
                 </div>
               </div>
-              <div class="row">
-                <div class="field"><label for="fDate">Preferred date</label><input class="input" type="date" id="fDate" name="date"></div>
-                <div class="field"><label for="fLang">Language</label><select class="input" id="fLang" name="lang"><option>English</option><option>Hindi</option><option>Malayalam</option><option>Kannada</option></select></div>
-              </div>
+              <div class="field"><label for="fDate">Preferred date for the reading</label><input class="input" type="date" id="fDate" name="date" style="max-width:calc(50% - 8px);min-width:220px"></div>
               <div class="field"><span class="lbl" id="lTime">Preferred time</span>
                 <div class="seg" role="radiogroup" aria-labelledby="lTime">
                   <input type="radio" name="time" id="t1" value="Morning" checked><label for="t1">Morning</label>
@@ -790,18 +791,20 @@ const skin = (r, g, b) => (r - b) - 14; // > 0 is skin; the wall is bluish grey
       <div class="meta"><span class="price">${R.price}</span><span class="dur">${R.time}</span></div>
       <a class="btn line sm" href="#book" data-r="${R.id}">Book</a>`;
     list.appendChild(el);
-    const o = document.createElement("option"); o.value = R.id; o.textContent = `${R.name}, ${R.price}`; sel.appendChild(o);
+    const o = document.createElement("option"); o.value = R.id; o.textContent = R.name; sel.appendChild(o);
   });
   sel.value = "full";
   list.addEventListener("click", e => { const a = e.target.closest("[data-r]"); if (a) { sel.value = a.dataset.r; update(); } });
 
-  const f = $("#bookForm"), name = $("#fName"), date = $("#fDate"), bubble = $("#bubble"), wa = $("#waBtn");
+  const f = $("#bookForm"), name = $("#fName"), date = $("#fDate"), dob = $("#fDob"), bubble = $("#bubble"), wa = $("#waBtn");
   const today = new Date(); today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
-  date.min = today.toISOString().slice(0, 10);
+  const todayISO = today.toISOString().slice(0, 10);
+  date.min = todayISO;   // the reading can't be booked in the past
+  dob.max = todayISO;    // birth dates go back as far as 1920
   const fmtDate = v => v ? new Date(v + "T00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : "Flexible";
   function message() {
     const R = READINGS.find(r => r.id === sel.value), fd = new FormData(f);
-    let m = `Hi Sreah, I'd like to book a palm reading.\n\nReading: ${R.name} (${R.time}, ${R.price})\nSession: ${fd.get("mode")}\nDate: ${fmtDate(date.value)}\nTime: ${fd.get("time")}\nLanguage: ${fd.get("lang")}\nName: ${name.value.trim() || "[your name]"}`;
+    let m = `Hi Sreah, I'd like to book a palm reading.\n\nReading: ${R.name} (${R.time}, ${R.price})\nSession: ${fd.get("mode")}\nDate: ${fmtDate(date.value)}\nTime: ${fd.get("time")}\nLanguage: ${fd.get("lang")}\nName: ${name.value.trim() || "[your name]"}\nDate of birth: ${dob.value ? new Date(dob.value + "T00:00").toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : "Not given"}`;
     const q = $("#fMsg").value.trim(); if (q) m += `\n\n${q}`;
     return m;
   }
